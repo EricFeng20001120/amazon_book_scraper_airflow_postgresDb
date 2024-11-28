@@ -98,62 +98,9 @@ Airflow uses Directed Acyclic Graphs (DAGs) to represent workflows. Here's how t
 5. **Inserting Data:**
    - Use Airflow’s `PostgresHook` to connect to the database and execute SQL queries.
 
-### Example DAG Code Snippet
-```python
-from airflow import DAG
-from airflow.operators.python_operator import PythonOperator
-from airflow.providers.postgres.operators.postgres import PostgresOperator
-from datetime import datetime
-import requests
-import pandas as pd
-
-def fetch_data(**kwargs):
-    url = "https://example.com/api"
-    headers = {"User-Agent": "YourUserAgent"}
-    response = requests.get(url, headers=headers)
-    data = response.json()
-    # Process data with pandas
-    df = pd.DataFrame(data)
-    cleaned_data = df.dropna()
-    kwargs['ti'].xcom_push(key='cleaned_data', value=cleaned_data.to_dict())
-
-def write_to_db(**kwargs):
-    from airflow.providers.postgres.hooks.postgres import PostgresHook
-    hook = PostgresHook(postgres_conn_id='book_connection')
-    data = kwargs['ti'].xcom_pull(key='cleaned_data')
-    df = pd.DataFrame(data)
-    for _, row in df.iterrows():
-        hook.run(f"INSERT INTO your_table (col1, col2) VALUES ({row['col1']}, {row['col2']})")
-
-define_dag = DAG(
-    'etl_pipeline',
-    schedule_interval='@daily',
-    start_date=datetime(2024, 1, 1),
-)
-
-fetch_task = PythonOperator(
-    task_id='fetch_data',
-    python_callable=fetch_data,
-    provide_context=True,
-    dag=define_dag
-)
-
-write_task = PythonOperator(
-    task_id='write_to_db',
-    python_callable=write_to_db,
-    provide_context=True,
-    dag=define_dag
-)
-
-fetch_task >> write_task
-```
-
-6. **Trigger DAG:** Use the Airflow UI to trigger the DAG and monitor the ETL pipeline.
-
----
-
 ## Conclusion
 By following these steps, you’ve built a robust ETL pipeline using Airflow and PostgreSQL. This setup can be extended to include more complex workflows and integrations. Whether you're fetching data from APIs, cleaning it with Python, or storing it in a database, Airflow provides the tools to automate and scale your data pipeline effectively.
 
 Feel free to experiment and enhance your workflows—the possibilities are endless!
 
+Reference: https://github.com/sunjana2199/amazon_books_data_pipeline/tree/main
